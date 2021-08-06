@@ -1,0 +1,6 @@
+.idea
+.gradle
+.gitcredentials
+build
+server
+src/main/java/resources/signing

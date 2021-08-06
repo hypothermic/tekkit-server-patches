@@ -1,0 +1,85 @@
+plugins {
+    id 'java'
+}
+
+configurations {
+    loader
+}
+
+group 'nl.hypothermic'
+version '10.0.0.1'
+
+repositories {
+    mavenCentral()
+
+    maven {
+        name = "GitHubPackages"
+        url = uri("https://maven.pkg.github.com/hypothermic/asm-htf")
+
+        credentials {
+            username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+            password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+        }
+    }
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+
+    loader 'nl.hypothermic:asm-htf-api:10.0.0.2'
+    runtime 'nl.hypothermic:asm-htf-api:10.0.0.2'
+    implementation 'nl.hypothermic:asm-htf-api:10.0.0.2'
+
+    loader 'nl.hypothermic:asm-htf-utils:10.0.0.2'
+    runtime 'nl.hypothermic:asm-htf-utils:10.0.0.2'
+    implementation 'nl.hypothermic:asm-htf-utils:10.0.0.2'
+
+    loader 'nl.hypothermic:asm-htf-loader:10.0.0.2'
+
+    annotationProcessor 'nl.hypothermic:asm-htf-processor:10.0.0.2'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+compileJava {
+    sourceCompatibility = '1.8'
+    targetCompatibility = '1.8'
+}
+
+jar {
+    dependsOn {
+        addonJar
+        loaderJar
+    }
+}
+
+task addonJar(type: Jar) {
+    from {
+        sourceSets.main.output
+        configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+task loaderJar(type: Jar) {
+    archiveBaseName = 'asm-htf-loader'
+
+    manifest {
+        attributes (
+                'Premain-Class': 'nl.hypothermic.htf.loader.Premain',
+                'Can-Redefine-Classes': 'true',
+                'Can-Retransform-Classes': 'true',
+                'Can-Set-Native-Method-Prefix': 'true',
+                'Specification-Title': rootProject.name,
+                'Specification-Version': rootProject.version,
+                'Implementation-Title': this.name,
+                'Implementation-Version': this.version
+        )
+    }
+
+    from {
+        configurations.loader.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
